@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Lock front-end</title>
+    <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script language="javascript" type="text/javascript" src="lockContract_abi.js"></script>
+  </head>
+  <body>
+    <h1>LOCK ETHEREUM</h1>
+    <br>
+    MY ETHEREUM ADDRES:
+    <div id="userAddress"></div>
+    <br>
+    <h2>DEPOSIT</h2>
+    <br>
+    <div>
+        Number of Block :
+        <input type="number" name="numberOfBlock" id="numberOfBlock">
+        <br>
+        <br>
+        Amount of ETH :
+        <input type="number" name="amount" id="amount">
+        <br>
+        <br>
+        <input id="lockETH" type="button" value="Lock your ETH" onclick="lockETH(document.getElementById('numberOfBlock').value, document.getElementById('amount').value);" />
+    </div>
+    <div id="txStatus"></div>
+    <br>
+    <h2>WITHDRAW</h2>
+    <br>
+    <div>
+        <input id="withdraw" type="button" value="UnLock your ETH" onclick="withdraw();" />
+    </div>
+    <div id="txStatusWithdraw"></div>
+
+    <script>
+      var lockContract;
+      var userAccount;
+
+      function startApp() {
+        var lockContractAddress = "0xe08Db9B229d5f37A332Bd2f93FeCC497FD6277d0"; // NEED TO BE UPDATED
+        lockContract = new web3js.eth.Contract(lockContractABI, lockContractAddress);
+        var accountInterval = setInterval(function() {
+          // Check if account has changed
+        //   console.log("web3js.eth.accounts[0] >", web3js.eth.accounts[0])
+        //   if (web3js.eth.accounts[0] !== userAccount) {
+            web3js.eth.getAccounts().then(e => userAccount = e[0]);
+            $("#userAddress").text(userAccount);
+        //   }
+        }, 100);
+      }
+
+      function lockETH(numberOfBlock, amount) {
+        $("#txStatus").text("Transfering your ETH...");
+        return lockContract.methods.lockEther(numberOfBlock)
+        .send({ from: userAccount, value: web3js.utils.toWei(amount.toString(), "ether") })
+        .on("receipt", function(receipt) {
+          $("#txStatus").text("Your ETH has been sent");
+        })
+        .on("error", function(error) {
+          $("#txStatus").text(error);
+        });
+      }
+
+      function withdraw() {
+        $("#txStatusWithdraw").text("Transfering your ETH...");
+        return lockContract.methods.withdraw()
+        .send({ from: userAccount })
+        .on("receipt", function(receipt) {
+          $("#txStatusWithdraw").text("Your ETH has been sent");
+        })
+        .on("error", function(error) {
+          $("#txStatusWithdraw").text(error);
+        });
+      }
+
+      window.addEventListener('load', function() {
+        if (typeof Web3 !== 'undefined') {
+            // web3js = new Web3(Web3.currentProvider);
+            web3js = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+            console.log('Web3 Detected! ')
+        } else {
+            console.log('No Web3 Detected... using HTTP Provider')
+        }
+        startApp()
+
+      })
+    </script>
+  </body>
+</html>
